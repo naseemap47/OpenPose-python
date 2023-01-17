@@ -45,7 +45,7 @@ try:
             n1_x, n1_y, n2_x, n2_y = 0, 0, 0, 0
             norm_dist = 0
 
-            h1_x1, h1_y1, h1_x2, h1_y2 = 0, 0, 0, 0
+            h1_x1, h1_y1, h2_x1, h2_y1 = 0, 0, 0, 0
 
             for id, key_id in enumerate(person):
                 # print(f'Id: {id}, Key: {key_id}')
@@ -58,10 +58,12 @@ try:
                         n2_x, n2_y = key_id[0], key_id[1]
                         
                     # Hand - Right
-                    if id == 3:
-                        h1_x1, h1_y1 = key_id[0], key_id[1]
                     if id == 4:    
-                        h1_x2, h1_y2 = key_id[0], key_id[1]
+                        h1_x1, h1_y1 = key_id[0], key_id[1]
+                    
+                    # Hand - Left
+                    if id == 7:    
+                        h2_x1, h2_y1 = key_id[0], key_id[1]
                     
                 
             ### Pre_processing
@@ -69,11 +71,17 @@ try:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
                 print('Norm Dist: ', norm_dist)
 
-            if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0 and h1_x2 > 0 and h1_y2 > 0:
+            if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
                 cv2.rectangle(
-                    imageToProcess, (int(h1_x1-norm_dist//10), int(h1_y1-norm_dist//2.5)),
-                    (int(h1_x2+norm_dist//10), int(h1_y2-norm_dist//3)), (0, 255, 0), 2
+                    imageToProcess, (int(h1_x1-norm_dist//5), int(h1_y1-norm_dist//5)),
+                    (int(h1_x1+norm_dist//5), int(h1_y1+norm_dist//5)), (0, 255, 0), 2
                 )
+            if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
+                cv2.rectangle(
+                    imageToProcess, (int(h2_x1-norm_dist//5), int(h2_y1-norm_dist//5)),
+                    (int(h2_x1+norm_dist//5), int(h2_y1+norm_dist//5)), (0, 255, 0), 2
+                )
+
     
                 ## BBox - ROI
                 # Head ROI
