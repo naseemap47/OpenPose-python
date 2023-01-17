@@ -78,68 +78,76 @@ try:
         keypoints = datum.poseKeypoints
         for person in keypoints:
             # print(len(person))
-            print('Each Person')
+            # print('Each Person')
 
             # Each person
+            points_x = []
+            points_y = []
             n1_x, n1_y, n2_x, n2_y = 0, 0, 0, 0
             norm_dist = 0
-            # thresh_head = 0
-            
-            # Nose
-            n_x, n_y = 0, 0
-            
-
-            # Mid Point
-            m_x, m_y = 0, 0
 
             for id, key_id in enumerate(person):
                 # print(f'Id: {id}, Key: {key_id}')
-                # if key_id[2] > 0.2:
-                    
-                # Normalize
-                if id == 1:
-                    n1_x, n1_y = key_id[0], key_id[1]
-                if id == 8:    
-                    n2_x, n2_y = key_id[0], key_id[1]
+                if key_id[2] > 0.5:
 
-                # Mid Point
-                if id == 1:
-                    m_x, m_y = key_id[0], key_id[1]
-                
-                # Nose
-                if id == 0:
-                    n_x, n_y = key_id[0], key_id[1]
+                    # Normalize
+                    if id == 1:
+                        n1_x, n1_y = key_id[0], key_id[1]
+                    if id == 8:    
+                        n2_x, n2_y = key_id[0], key_id[1]
+                        
+                    # Head Points
+                    if id == 0:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])
+                    if id == 1:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])
+                    if id == 15:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])
+                    if id == 16:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])
+                    if id == 17:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])
+                    if id == 18:
+                        points_x.append(key_id[0])
+                        points_y.append(key_id[1])   
                 
             ### Pre_processing
-            ## head    
             if n1_x > 0 and n1_y > 0 and n2_x > 0 and n2_y > 0:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
                 print('Norm Dist: ', norm_dist)
 
-            if norm_dist > 0 and m_x > 0 and m_y > 0 and n_x > 0 and n_y > 0:
+            if len(points_x) > 0 and len(points_y) > 0:
+                points_x = [i for i in points_x if i != 0]
+                points_y = [i for i in points_y if i != 0]
+                print('points_x: ', min(points_x))
+                print('points_y: ', max(points_y))
+
+                xmin, ymin, xmax, ymax = min(points_x), min(points_y), max(points_x), max(points_y)
+
+                cv2.rectangle(
+                    imageToProcess, (int(xmin-norm_dist//10), int(ymin-norm_dist//2.5)),
+                    (int(xmax+norm_dist//10), int(ymax-norm_dist//3)), (0, 255, 0), 2
+                )
+    
+                ## BBox - ROI
+                # Head ROI
+                path_to_save_dir = '/openpose/examples/media/head'
+                img_roi = imageToProcess[int(ymin-norm_dist//2.5):int(ymax-norm_dist//3), int(xmin-norm_dist//10):int(xmax+norm_dist//10)]
                 
-                # Nose in side BBox
-                if int(m_x-norm_dist//2) < n_x < int(m_x+norm_dist//3) and int(m_y-norm_dist//1.3) < n_y < int(m_y+norm_dist//8):
-                    ## BBox - ROI
-                    # Head ROI
-                    path_to_save_dir = '/openpose/examples/media/head'
-                    img_roi = imageToProcess[int(m_y-norm_dist//1.3):int(m_y+norm_dist//8), int(m_x-norm_dist//2):int(m_x+norm_dist//3)]
-                    
-                    # save
-                    if count % 5 == 0:
-                        path_name = f'{path_to_save_dir}/{len(os.listdir(path_to_save_dir))}.jpg'
-                        cv2.imwrite(path_name, img_roi)
-                        print(f'[INFO] Successfully saved {path_name}')
-                    cv2.rectangle(
-                        imageToProcess, 
-                        (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
-                        (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
-                        (0, 255, 0), 2
-                    )
+                # save
+                if count % 5 == 0:
+                    path_name = f'{path_to_save_dir}/{len(os.listdir(path_to_save_dir))}.jpg'
+                    cv2.imwrite(path_name, img_roi)
+                    print(f'[INFO] Successfully saved {path_name}')
 
         # Display Image
         # print("Body keypoints: \n" + str(datum.poseKeypoints))
-        cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
+        # cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
         imageToProcess = cv2.resize(imageToProcess, (1000, 700))
         cv2.imshow("img", imageToProcess)
 
