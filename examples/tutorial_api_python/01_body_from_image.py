@@ -62,8 +62,9 @@ try:
     opWrapper.start()
 
     cap = cv2.VideoCapture('/openpose/examples/media/test.mp4')
-
+    count = 0
     while True:
+        count += 1
         success, imageToProcess = cap.read()
         if not success:
             print('[INFO] Failed to read Video')
@@ -121,6 +122,14 @@ try:
                 if int(m_x-norm_dist//2) < n_x < int(m_x+norm_dist//3) and int(m_y-norm_dist//1.3) < n_y < int(m_y+norm_dist//8):
                     ## BBox - ROI
                     # Head ROI
+                    path_to_save_dir = '/openpose/examples/media/head'
+                    img_roi = imageToProcess[int(m_y-norm_dist//1.3):int(m_y+norm_dist//8), int(m_x-norm_dist//2):int(m_x+norm_dist//3)]
+                    
+                    # save
+                    if count % 5 == 0:
+                        path_name = f'{path_to_save_dir}/{len(os.listdir(path_to_save_dir))}.jpg'
+                        cv2.imwrite(path_name, img_roi)
+                        print(f'[INFO] Successfully saved {path_name}')
                     cv2.rectangle(
                         imageToProcess, 
                         (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
