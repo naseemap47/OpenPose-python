@@ -84,12 +84,9 @@ try:
             norm_dist = 0
             # thresh_head = 0
             
-            # Head
-            head1_x, head1_y, head2_x, head2_y = 0, 0, 0, 0
-
-            # Hand
-            hand1_x1, hand1_y1, hand1_x2, hand1_y2 = 0, 0, 0, 0
-            hand2_x1, hand2_y1, hand2_x2, hand2_y2 = 0, 0, 0, 0
+            # Nose
+            n_x, n_y = 0, 0
+            
 
             # Mid Point
             m_x, m_y = 0, 0
@@ -108,79 +105,31 @@ try:
                 if id == 1:
                     m_x, m_y = key_id[0], key_id[1]
                 
-                # Head
-                if id == 17:
-                    head1_x, head1_y = key_id[0], key_id[1]
-                if id == 18:    
-                    head2_x, head2_y = key_id[0], key_id[1]
-
-                # Hand - 1
-                if id == 3:
-                    hand1_x1, hand1_y1 = key_id[0], key_id[1]
-                if id == 4:    
-                    hand1_x2, hand1_y2 = key_id[0], key_id[1]
-
-                # Hand - 2
-                if id == 6:
-                    hand2_x1, hand2_y1 = key_id[0], key_id[1]
-                if id == 7:    
-                    hand2_x2, hand2_y2 = key_id[0], key_id[1]
-
-            
+                # Nose
+                if id == 0:
+                    n_x, n_y = key_id[0], key_id[1]
+                
             ### Pre_processing
             ## head    
             if n1_x > 0 and n1_y > 0 and n2_x > 0 and n2_y > 0:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
                 print('Norm Dist: ', norm_dist)
 
-            if norm_dist > 0 and head1_x > 0 and head1_y > 0 and head2_x > 0 and head2_y > 0:
-                # Head Cap
-                head_dist = np.sqrt(((head1_x-head2_x)**2 + (head1_y-head2_y)**2))
-                # print('Head Dist: ', head_dist)
-                thresh_head = head_dist/norm_dist
-                print('Thresh: ', thresh_head)
-
-                # Draw
-                # cv2.circle(
-                #     imageToProcess, ((int(head2_x-thresh_head*10), int(head2_y-thresh_head*2))),
-                #     5, (0, 255, 0), cv2.FILLED
-                # )
-                # cv2.circle(
-                #     imageToProcess, (head2_x, head2_y),
-                #     5, (255, 255, 0), cv2.FILLED
-                # )
-
-                ## BBox - ROI
-                # Head ROI
-                # cv2.rectangle(
-                #     imageToProcess, 
-                #     (int(head2_x-thresh_head*25), int(head2_y-thresh_head*30)),
-                #     (int(head1_x+thresh_head*30), int(head1_y+thresh_head*20)),
-                #     (0, 255, 0), 2
-                # )
-            
-            ## Hand - 1
-            # if norm_dist >0 and hand1_x1 >0 and hand1_y1 >0 and hand1_x2 >0 and hand1_y2 >0:
-            #     # Glow
-            #     hand_dist = np.sqrt(((hand1_x1-hand1_x2)**2 + (hand1_y1-hand1_y2)**2))
-            #     thresh_hand = hand_dist/norm_dist
-            #     print('Hand Thresh: ', thresh_hand)
-
-                ## BBox - ROI
-                # Hand -1 ROI
-                # cv2.rectangle(
-                #     imageToProcess, 
-                #     (int(hand1_x1-thresh_hand*2), int(hand1_y1-thresh_hand*3)),
-                #     (int(hand1_x2+thresh_hand*3), int(hand1_y2+thresh_hand*2)),
-                #     (0, 255, 0), 2
-                # )
-            
-
-
+            if norm_dist > 0 and m_x > 0 and m_y > 0 and n_x > 0 and n_y > 0:
+                
+                # Nose in side BBox
+                if int(m_x-norm_dist//2) < n_x < int(m_x+norm_dist//3) and int(m_y-norm_dist//1.3) < n_y < int(m_y+norm_dist//8):
+                    ## BBox - ROI
+                    # Head ROI
+                    cv2.rectangle(
+                        imageToProcess, 
+                        (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
+                        (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
+                        (0, 255, 0), 2
+                    )
 
         # Display Image
         # print("Body keypoints: \n" + str(datum.poseKeypoints))
-        
         cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
         imageToProcess = cv2.resize(imageToProcess, (1000, 700))
         cv2.imshow("img", imageToProcess)
