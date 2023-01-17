@@ -27,6 +27,7 @@ try:
     while True:
         count += 1
         success, imageToProcess = cap.read()
+        img_copy = imageToProcess.copy()
         if not success:
             print('[INFO] Failed to read Video')
             break
@@ -77,7 +78,9 @@ try:
             ### Pre_processing
             if n1_x > 0 and n1_y > 0 and n2_x > 0 and n2_y > 0:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
-                print('Norm Dist: ', norm_dist)
+                # head = (n1_x, int(n1_y-norm_dist*0.4))
+                # offset = 
+                # print('Norm Dist: ', norm_dist)
 
             if norm_dist > 0 and m_x > 0 and m_y > 0:
                 
@@ -86,40 +89,76 @@ try:
                 ## BBox - ROI
                 # Head ROI
                 cv2.rectangle(
-                    imageToProcess, 
+                    img_copy, 
                     (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
                     (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
                     (0, 255, 0), 2
                 )
 
+                # Head ROI
+                path_to_save_dir_head = '/openpose/examples/media/head'
+                hand_roi = imageToProcess[int(m_y-norm_dist//1.3):int(m_y+norm_dist//8), int(m_x-norm_dist//2):int(m_x+norm_dist//3)]
+                
+                # save
+                try:
+                    if count % 10 == 0:
+                        path_name = f'{path_to_save_dir_head}/{len(os.listdir(path_to_save_dir_head))}.jpg'
+                        cv2.imwrite(path_name, hand_roi)
+                        print(f'[INFO] Successfully saved {path_name}')
+                except:
+                    print(f'[INFO] Failed to save {path_name}')
+                
+
             if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
                 cv2.rectangle(
-                    imageToProcess, (int(h1_x1-norm_dist//5), int(h1_y1-norm_dist//5)),
-                    (int(h1_x1+norm_dist//5), int(h1_y1+norm_dist//5)), (0, 255, 0), 2
+                    img_copy,
+                    (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
+                    (int(h1_x1+norm_dist//3), int(h1_y1+norm_dist//3)),
+                    (0, 255, 0), 2
                 )
+                ## BBox - ROI
+                # Hand ROI
+                path_to_save_dir_hand = '/openpose/examples/media/hand'
+                hand1_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
+                
+                # save
+                try:
+                    if count % 10 == 0:
+                        path_name = f'{path_to_save_dir_hand}/{len(os.listdir(path_to_save_dir_hand))}.jpg'
+                        cv2.imwrite(path_name, hand1_roi)
+                        print(f'[INFO] Successfully saved {path_name}')
+                except:
+                    print(f'[INFO] Failed to save {path_name}')
+
+
             if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
                 cv2.rectangle(
-                    imageToProcess, (int(h2_x1-norm_dist//5), int(h2_y1-norm_dist//5)),
-                    (int(h2_x1+norm_dist//5), int(h2_y1+norm_dist//5)), (0, 255, 0), 2
+                    img_copy,
+                    (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
+                    (int(h2_x1+norm_dist//3), int(h2_y1+norm_dist//3)),
+                    (0, 255, 0), 2
                 )
 
-    
                 ## BBox - ROI
-                # Head ROI
-                # path_to_save_dir = '/openpose/examples/media/head'
-                # img_roi = imageToProcess[int(ymin-norm_dist//2.5):int(ymax-norm_dist//3), int(xmin-norm_dist//10):int(xmax+norm_dist//10)]
+                # Hand ROI
+                path_to_save_dir_hand = '/openpose/examples/media/hand'
+                hand2_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
                 
-                # # save
-                # if count % 5 == 0:
-                #     path_name = f'{path_to_save_dir}/{len(os.listdir(path_to_save_dir))}.jpg'
-                #     cv2.imwrite(path_name, img_roi)
-                #     print(f'[INFO] Successfully saved {path_name}')
+                # save
+                try:
+                    if count % 10 == 0:
+                        path_name = f'{path_to_save_dir_hand}/{len(os.listdir(path_to_save_dir_hand))}.jpg'
+                        cv2.imwrite(path_name, hand2_roi)
+                        print(f'[INFO] Successfully saved {path_name}')
+                except:
+                    print(f'[INFO] Failed to save {path_name}')    
+                
 
         # Display Image
         # print("Body keypoints: \n" + str(datum.poseKeypoints))
         # cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
-        imageToProcess = cv2.resize(imageToProcess, (1000, 700))
-        cv2.imshow("img", imageToProcess)
+        img_copy = cv2.resize(img_copy, (1000, 700))
+        cv2.imshow("img", img_copy)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
