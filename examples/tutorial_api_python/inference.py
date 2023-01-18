@@ -16,9 +16,9 @@ try:
     
     ############################
     white_pixel_value_head = 255
-    white_pixel_value_hand = 255
-    pixel_thresh_head = 1500
-    pixel_thresh_hand = 1500
+    # white_pixel_value_hand = 255
+    # pixel_thresh_head = 1500
+    # pixel_thresh_hand = 1500
     ############################
 
     params = dict()
@@ -105,15 +105,20 @@ try:
                     head_roi = imageToProcess[int(mid_y-norm_dist//3):int(mid_y+norm_dist//3), int(mid_x-norm_dist//3):int(mid_x+norm_dist//3)]
 
                     # Save
-                    cv2.imwrite(f"/openpose/examples/media/head/{len(os.listdir('/openpose/examples/media/head'))}.jpg", head_roi)
+                    # cv2.imwrite(f"/openpose/examples/media/head/{len(os.listdir('/openpose/examples/media/head'))}.jpg", head_roi)
 
                     gray_hand = cv2.cvtColor(head_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
 
                     n_white_pix = np.sum(thresh1 == white_pixel_value_head)
-                    print(n_white_pix)
+                    print('n_white_pix: ', n_white_pix)
 
-                    if 2800 > n_white_pix > 1100:
+                    # Average Pixel
+                    h, w, _ = head_roi.shape
+                    avg_pixel = n_white_pix/(h*w)
+                    print('avg_pixel: ', avg_pixel)
+
+                    if 0.9 > avg_pixel > 0.33:
                         cv2.rectangle(
                             img_copy, 
                             (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
