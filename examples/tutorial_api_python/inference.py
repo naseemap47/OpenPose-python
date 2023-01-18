@@ -22,12 +22,7 @@ try:
     opWrapper.configure(params)
     opWrapper.start()
 
-    # Model
-    # saved_model = tf.keras.models.load_model('model.h5')
-    # img_size = 240
-    # class_names = ['withGlove', 'withHelmet', 'withoutGlove', 'withoutHelmet']
-
-    cap = cv2.VideoCapture('/openpose/examples/tutorial_api_python/00000001541000000.mp4')
+    cap = cv2.VideoCapture('/openpose/examples/media/00000001541000000.mp4')
     count = 0
     
     while True:
@@ -56,6 +51,9 @@ try:
             norm_dist = 0
 
             h1_x1, h1_y1, h2_x1, h2_y1 = 0, 0, 0, 0
+            
+            # Head
+            head1_x, head1_y, head2_x, head2_y = 0, 0, 0, 0
 
             for id, key_id in enumerate(person):
                 # print(f'Id: {id}, Key: {key_id}')
@@ -75,60 +73,57 @@ try:
                     if id == 7:    
                         h2_x1, h2_y1 = key_id[0], key_id[1]
                     
-                    # Mid Point
-                    if id == 1:
-                        m_x, m_y = key_id[0], key_id[1]
-                    
-                    # Nose
-                    if id == 0:
-                        n_x, n_y = key_id[0], key_id[1]
+                    # Head
+                    if id == 17:
+                        head1_x, head1_y = key_id[0], key_id[1]
+                    if id == 18:    
+                        head2_x, head2_y = key_id[0], key_id[1]
 
                 
             ### Pre_processing
             if n1_x > 0 and n1_y > 0 and n2_x > 0 and n2_y > 0:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
-            if norm_dist > 0 and m_x > 0 and m_y > 0:
+            
+            if norm_dist > 0:
                 try:
+                    if head1_x > 0 and head2_x > 0:
+                        # Mid point
+                        mid_x, mid_y = int((head1_x+head2_x)/2), int((head1_y+head2_y)/2)
+                    elif (head1_x > 0 and head2_x == 0):
+                        mid_x, mid_y = head1_x, head1_y
+                    elif (head1_x == 0 and head2_x > 0):
+                        mid_x, mid_y = head2_x, head2_y
+                    elif (head1_x == 0 and head2_x == 0):
+                        continue
+
                     # Head ROI
-                    hand_roi = imageToProcess[int(m_y-norm_dist//1.3):int(m_y+norm_dist//8), int(m_x-norm_dist//2):int(m_x+norm_dist//3)]
-                    gray_hand = cv2.cvtColor(hand_roi, cv2.COLOR_BGR2GRAY)
+                    head_roi = imageToProcess[int(mid_y-norm_dist//3):int(mid_y+norm_dist//3), int(mid_x-norm_dist//3):int(mid_x+norm_dist//3)]
+                    gray_hand = cv2.cvtColor(head_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
+
                     n_white_pix = np.sum(thresh1 == 255)
                     print(n_white_pix)
 
-                    # Load Model
-                    # img_resize = cv2.resize(hand_roi, (img_size, img_size))
-                    # h, w, _ = img_copy.shape
-                    # img_rgb = cv2.cvtColor(img_resize, cv2.COLOR_BGR2RGB)
-                    # img = tf.keras.preprocessing.image.img_to_array(img_rgb)
-                    # img = np.expand_dims(img, axis=0)
-                    # img = tf.keras.applications.efficientnet.preprocess_input(img)
-                    # prediction = saved_model.predict(img)[0]
-                    # predict = class_names[prediction.argmax()]
-
                     if n_white_pix > 1500:
-                        # Head ROI
                         cv2.rectangle(
-                            img_copy, 
-                            (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
-                            (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
+                            imageToProcess, 
+                            (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
+                            (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
                             (0, 255, 0), 2
                         )
-                        helmet += 1
                     else:
                         cv2.rectangle(
-                            img_copy, 
-                            (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
-                            (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
-                            (0, 0, 255), 2
+                            imageToProcess, 
+                            (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
+                            (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
+                            (0, 255, 0), 2
                         )
                 except:
                     pass
-                
 
             if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
                 try:
-                    # Hand ROI
+                    # Hand ROI - Right
                     hand1_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
 
                     gray_hand = cv2.cvtColor(hand1_roi, cv2.COLOR_BGR2GRAY)
@@ -159,7 +154,7 @@ try:
             if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
                 try:
 
-                    # Hand ROI
+                    # Hand ROI - Left
                     hand2_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
 
                     gray_hand = cv2.cvtColor(hand2_roi, cv2.COLOR_BGR2GRAY)
