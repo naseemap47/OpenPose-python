@@ -13,7 +13,14 @@ import pyshine as ps
 
 
 try:
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+    
+    ############################
+    white_pixel_value_head = 255
+    white_pixel_value_hand = 255
+    pixel_thresh_head = 1500
+    pixel_thresh_hand = 1500
+    ############################
+
     params = dict()
     params["model_folder"] = "/openpose/models"
     
@@ -45,8 +52,6 @@ try:
         for person in keypoints:
 
             # Each person
-            points_x = []
-            points_y = []
             n1_x, n1_y, n2_x, n2_y = 0, 0, 0, 0
             norm_dist = 0
 
@@ -98,96 +103,102 @@ try:
 
                     # Head ROI
                     head_roi = imageToProcess[int(mid_y-norm_dist//3):int(mid_y+norm_dist//3), int(mid_x-norm_dist//3):int(mid_x+norm_dist//3)]
+
+                    # Save
+                    cv2.imwrite(f"/openpose/examples/media/head/{len(os.listdir('/openpose/examples/media/head'))}.jpg", head_roi)
+
                     gray_hand = cv2.cvtColor(head_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
 
-                    n_white_pix = np.sum(thresh1 == 255)
+                    n_white_pix = np.sum(thresh1 == white_pixel_value_head)
                     print(n_white_pix)
 
-                    if n_white_pix > 1500:
+                    if 2800 > n_white_pix > 1100:
                         cv2.rectangle(
-                            imageToProcess, 
+                            img_copy, 
                             (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
                             (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
                             (0, 255, 0), 2
                         )
                     else:
                         cv2.rectangle(
-                            imageToProcess, 
+                            img_copy, 
                             (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
                             (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
-                            (0, 255, 0), 2
-                        )
-                except:
-                    pass
-
-            if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
-                try:
-                    # Hand ROI - Right
-                    hand1_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
-
-                    gray_hand = cv2.cvtColor(hand1_roi, cv2.COLOR_BGR2GRAY)
-                    ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
-                    n_white_pix1 = np.sum(thresh1 == 255)
-                    print(n_white_pix1)
-
-                    if n_white_pix1 > 1500:
-                        # Head ROI
-                        cv2.rectangle(
-                            img_copy,
-                            (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
-                            (int(h1_x1+norm_dist//3), int(h1_y1+norm_dist//3)),
-                            (0, 255, 0), 2
-                        )
-                        glove += 1
-                    else:
-                        cv2.rectangle(
-                            img_copy,
-                            (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
-                            (int(h1_x1+norm_dist//3), int(h1_y1+norm_dist//3)),
                             (0, 0, 255), 2
                         )
                 except:
                     pass
 
+            # if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
+            #     try:
+            #         # Hand ROI - Right
+            #         hand1_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
 
-            if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
-                try:
+            #         gray_hand = cv2.cvtColor(hand1_roi, cv2.COLOR_BGR2GRAY)
+            #         ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
+            #         n_white_pix1 = np.sum(thresh1 == white_pixel_value_hand)
+            #         print(n_white_pix1)
 
-                    # Hand ROI - Left
-                    hand2_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
+            #         if n_white_pix1 > 1500:
+            #             # Head ROI
+            #             cv2.rectangle(
+            #                 img_copy,
+            #                 (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
+            #                 (int(h1_x1+norm_dist//3), int(h1_y1+norm_dist//3)),
+            #                 (0, 255, 0), 2
+            #             )
+            #             glove += 1
+            #         else:
+            #             cv2.rectangle(
+            #                 img_copy,
+            #                 (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
+            #                 (int(h1_x1+norm_dist//3), int(h1_y1+norm_dist//3)),
+            #                 (0, 0, 255), 2
+            #             )
+            #     except:
+            #         pass
 
-                    gray_hand = cv2.cvtColor(hand2_roi, cv2.COLOR_BGR2GRAY)
-                    ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
-                    n_white_pix2 = np.sum(thresh1 == 255)
-                    print(n_white_pix2)
 
-                    if n_white_pix2 > 1500:
-                        # Head ROI
-                        cv2.rectangle(
-                        img_copy,
-                        (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
-                        (int(h2_x1+norm_dist//3), int(h2_y1+norm_dist//3)),
-                        (0, 255, 0), 2
-                    )
-                        glove += 1
-                    else:
-                        cv2.rectangle(
-                        img_copy,
-                        (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
-                        (int(h2_x1+norm_dist//3), int(h2_y1+norm_dist//3)),
-                        (0, 0, 255), 2
-                    )
-                except:
-                    pass
+            # if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
+            #     try:
+
+            #         # Hand ROI - Left
+            #         hand2_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
+
+            #         gray_hand = cv2.cvtColor(hand2_roi, cv2.COLOR_BGR2GRAY)
+            #         ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
+            #         n_white_pix2 = np.sum(thresh1 == white_pixel_value_hand)
+            #         print(n_white_pix2)
+
+            #         if n_white_pix2 > 1500:
+            #             # Head ROI
+            #             cv2.rectangle(
+            #             img_copy,
+            #             (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
+            #             (int(h2_x1+norm_dist//3), int(h2_y1+norm_dist//3)),
+            #             (0, 255, 0), 2
+            #         )
+            #             glove += 1
+            #         else:
+            #             cv2.rectangle(
+            #             img_copy,
+            #             (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
+            #             (int(h2_x1+norm_dist//3), int(h2_y1+norm_dist//3)),
+            #             (0, 0, 255), 2
+            #         )
+            #     except:
+            #         pass
 
         # Display Image
         # print("Body keypoints: \n" + str(datum.poseKeypoints))
         # ps.putBText(img_copy,label,text_offset_x=20,text_offset_y=40,vspace=20,hspace=10, font_scale=1.0,background_RGB=(240,16,255),text_RGB=(255,255,255))
-        ps.putBText(img_copy,f'Number of people detected: {len(keypoints)}',text_offset_x=20,text_offset_y=101,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
-        ps.putBText(img_copy,f'Number of people wearing Helmet: {helmet}',text_offset_x=20,text_offset_y=162,vspace=20,hspace=10, font_scale=1.0,background_RGB=(0,250,250),text_RGB=(255,255,255)) # 210,20,4 red
-        ps.putBText(img_copy,f'Number of people wearing Gloves: {glove}',text_offset_x=20,text_offset_y=223,vspace=20,hspace=10, font_scale=1.0,background_RGB=(228,225,222),text_RGB=(0,0,0))
-        cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
+        
+        # ps.putBText(img_copy,f'Number of people detected: {len(keypoints)}',text_offset_x=20,text_offset_y=101,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
+        # ps.putBText(img_copy,f'Number of people wearing Helmet: {helmet}',text_offset_x=20,text_offset_y=162,vspace=20,hspace=10, font_scale=1.0,background_RGB=(0,250,250),text_RGB=(255,255,255)) # 210,20,4 red
+        # ps.putBText(img_copy,f'Number of people wearing Gloves: {glove}',text_offset_x=20,text_offset_y=223,vspace=20,hspace=10, font_scale=1.0,background_RGB=(228,225,222),text_RGB=(0,0,0))
+        
+        # cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
         img_copy = cv2.resize(img_copy, (1000, 700))
         cv2.imshow("img", img_copy)
         # cv2.imshow("hand", hand_roi)
