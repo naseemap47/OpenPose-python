@@ -13,7 +13,12 @@ import pyshine as ps
 
 
 try:
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+    
+    ############################
+    white_pixel_value_head = 255
+    white_pixel_value_hand = 255
+    ############################
+
     params = dict()
     params["model_folder"] = "/openpose/models"
     
@@ -22,12 +27,7 @@ try:
     opWrapper.configure(params)
     opWrapper.start()
 
-    # Model
-    # saved_model = tf.keras.models.load_model('model.h5')
-    # img_size = 240
-    # class_names = ['withGlove', 'withHelmet', 'withoutGlove', 'withoutHelmet']
-
-    cap = cv2.VideoCapture('/openpose/examples/tutorial_api_python/00000001541000000.mp4')
+    cap = cv2.VideoCapture('/openpose/examples/media/00000001541000000.mp4')
     count = 0
     
     while True:
@@ -50,12 +50,13 @@ try:
         for person in keypoints:
 
             # Each person
-            points_x = []
-            points_y = []
             n1_x, n1_y, n2_x, n2_y = 0, 0, 0, 0
             norm_dist = 0
 
             h1_x1, h1_y1, h2_x1, h2_y1 = 0, 0, 0, 0
+            
+            # Head
+            head1_x, head1_y, head2_x, head2_y = 0, 0, 0, 0
 
             for id, key_id in enumerate(person):
                 # print(f'Id: {id}, Key: {key_id}')
@@ -75,68 +76,90 @@ try:
                     if id == 7:    
                         h2_x1, h2_y1 = key_id[0], key_id[1]
                     
-                    # Mid Point
-                    if id == 1:
-                        m_x, m_y = key_id[0], key_id[1]
-                    
-                    # Nose
-                    if id == 0:
-                        n_x, n_y = key_id[0], key_id[1]
+                    # Head
+                    if id == 17:
+                        head1_x, head1_y = key_id[0], key_id[1]
+                    if id == 18:    
+                        head2_x, head2_y = key_id[0], key_id[1]
 
                 
             ### Pre_processing
             if n1_x > 0 and n1_y > 0 and n2_x > 0 and n2_y > 0:
                 norm_dist = np.sqrt(((n1_x-n2_x)**2 + (n1_y-n2_y)**2))
-            if norm_dist > 0 and m_x > 0 and m_y > 0:
+                print('Average Pixel:')
+            
+            ############################ Head #############################
+            if norm_dist > 0:
                 try:
+                    if head1_x > 0 and head2_x > 0:
+                        # Mid point
+                        mid_x, mid_y = int((head1_x+head2_x)/2), int((head1_y+head2_y)/2)
+                    elif (head1_x > 0 and head2_x == 0):
+                        mid_x, mid_y = head1_x, head1_y
+                    elif (head1_x == 0 and head2_x > 0):
+                        mid_x, mid_y = head2_x, head2_y
+                    elif (head1_x == 0 and head2_x == 0):
+                        continue
+
                     # Head ROI
-                    hand_roi = imageToProcess[int(m_y-norm_dist//1.3):int(m_y+norm_dist//8), int(m_x-norm_dist//2):int(m_x+norm_dist//3)]
-                    gray_hand = cv2.cvtColor(hand_roi, cv2.COLOR_BGR2GRAY)
+                    head_roi = imageToProcess[int(mid_y-norm_dist//3):int(mid_y+norm_dist//3), int(mid_x-norm_dist//3):int(mid_x+norm_dist//3)]
+
+                    # Save
+                    # cv2.imwrite(f"/openpose/examples/media/head/{len(os.listdir('/openpose/examples/media/head'))}.jpg", head_roi)
+
+                    gray_hand = cv2.cvtColor(head_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
-                    n_white_pix = np.sum(thresh1 == 255)
-                    print(n_white_pix)
 
-                    # Load Model
-                    # img_resize = cv2.resize(hand_roi, (img_size, img_size))
-                    # h, w, _ = img_copy.shape
-                    # img_rgb = cv2.cvtColor(img_resize, cv2.COLOR_BGR2RGB)
-                    # img = tf.keras.preprocessing.image.img_to_array(img_rgb)
-                    # img = np.expand_dims(img, axis=0)
-                    # img = tf.keras.applications.efficientnet.preprocess_input(img)
-                    # prediction = saved_model.predict(img)[0]
-                    # predict = class_names[prediction.argmax()]
+                    n_white_pix = np.sum(thresh1 == white_pixel_value_head)
+                    # print('n_white_pix: ', n_white_pix)
 
-                    if n_white_pix > 1500:
-                        # Head ROI
+                    # Average Pixel
+                    h, w, _ = head_roi.shape
+                    avg_pixel = n_white_pix/(h*w)
+                    print('Head: ', avg_pixel)
+
+                    if 0.9 > avg_pixel > 0.33:
                         cv2.rectangle(
                             img_copy, 
-                            (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
-                            (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
+                            (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
+                            (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
                             (0, 255, 0), 2
                         )
-                        helmet += 1
+                        helmet =+ 1
                     else:
                         cv2.rectangle(
                             img_copy, 
-                            (int(m_x-norm_dist//2), int(m_y-norm_dist//1.3)),
-                            (int(m_x+norm_dist//3), int(m_y+norm_dist//8)),
+                            (int(mid_x-norm_dist//3), int(mid_y-norm_dist//3)),
+                            (int(mid_x+norm_dist//3), int(mid_y+norm_dist//3)),
                             (0, 0, 255), 2
                         )
                 except:
                     pass
-                
-
+            
+            ############################ Hand - Right #############################
             if norm_dist > 0 and h1_x1 > 0 and h1_y1 > 0:
                 try:
-                    # Hand ROI
+                    # Hand ROI - Right
                     hand1_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
 
                     gray_hand = cv2.cvtColor(hand1_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
-                    n_white_pix1 = np.sum(thresh1 == 255)
-                    print(n_white_pix1)
+                    n_white_pix1 = np.sum(thresh1 == white_pixel_value_hand)
+                    # print(n_white_pix1)
 
-                    if n_white_pix1 > 1500:
+                    # Average Pixel
+                    h, w, _ = hand1_roi.shape
+                    avg_pixel1 = n_white_pix1/(h*w)
+                    print('Hand Right: ', avg_pixel1)
+
+                    # cv2.putText(
+                    #     img_copy, str(round(avg_pixel1, 3)),
+                    #     (int(h1_x1-norm_dist//3), int(h1_y1-norm_dist//3)),
+                    #     cv2.FONT_HERSHEY_PLAIN, 3,
+                    #     (0, 255, 0), 3
+                    # )
+
+                    if avg_pixel1 > 0.44:
                         # Head ROI
                         cv2.rectangle(
                             img_copy,
@@ -159,15 +182,27 @@ try:
             if norm_dist > 0 and h2_x1 > 0 and h2_y1 > 0:
                 try:
 
-                    # Hand ROI
+                    # Hand ROI - Left
                     hand2_roi = imageToProcess[int(h1_y1-norm_dist//3):int(h1_y1+norm_dist//3), int(h1_x1-norm_dist//3):int(h1_x1+norm_dist//3)]
 
                     gray_hand = cv2.cvtColor(hand2_roi, cv2.COLOR_BGR2GRAY)
                     ret,thresh1 = cv2.threshold(gray_hand,127,255,cv2.THRESH_BINARY)
-                    n_white_pix2 = np.sum(thresh1 == 255)
-                    print(n_white_pix2)
+                    n_white_pix2 = np.sum(thresh1 == white_pixel_value_hand)
+                    # print(n_white_pix2)
 
-                    if n_white_pix2 > 1500:
+                    # Average Pixel
+                    h, w, _ = hand2_roi.shape
+                    avg_pixel2 = n_white_pix2/(h*w)
+                    print('Hand Left: ', avg_pixel2)
+
+                    # cv2.putText(
+                    #     img_copy, str(round(avg_pixel2, 3)),
+                    #     (int(h2_x1-norm_dist//3), int(h2_y1-norm_dist//3)),
+                    #     cv2.FONT_HERSHEY_PLAIN, 3,
+                    #     (0, 255, 0), 3
+                    # )
+
+                    if avg_pixel2 > 0.44:
                         # Head ROI
                         cv2.rectangle(
                         img_copy,
@@ -189,10 +224,12 @@ try:
         # Display Image
         # print("Body keypoints: \n" + str(datum.poseKeypoints))
         # ps.putBText(img_copy,label,text_offset_x=20,text_offset_y=40,vspace=20,hspace=10, font_scale=1.0,background_RGB=(240,16,255),text_RGB=(255,255,255))
+        
         ps.putBText(img_copy,f'Number of people detected: {len(keypoints)}',text_offset_x=20,text_offset_y=101,vspace=20,hspace=10, font_scale=1.0,background_RGB=(10,20,222),text_RGB=(255,255,255))
         ps.putBText(img_copy,f'Number of people wearing Helmet: {helmet}',text_offset_x=20,text_offset_y=162,vspace=20,hspace=10, font_scale=1.0,background_RGB=(0,250,250),text_RGB=(255,255,255)) # 210,20,4 red
         ps.putBText(img_copy,f'Number of people wearing Gloves: {glove}',text_offset_x=20,text_offset_y=223,vspace=20,hspace=10, font_scale=1.0,background_RGB=(228,225,222),text_RGB=(0,0,0))
-        cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
+        
+        # cv2.imshow("OpenPose 1.5.1 - Tutorial Python API", datum.cvOutputData)
         img_copy = cv2.resize(img_copy, (1000, 700))
         cv2.imshow("img", img_copy)
         # cv2.imshow("hand", hand_roi)
